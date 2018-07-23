@@ -1,7 +1,8 @@
 extern crate nalgebra as na;
 
-use na::{Vector3};
-use na::geometry::UnitQuaternion;
+mod geometry;
+
+use geometry::{JVector3, JUnitQuaternion};
 
 mod consts {
     /* This is not intended to be used directly. Rather, values should be
@@ -28,10 +29,10 @@ struct WorldConf {
 struct Ball {
     radius: f64,
     weight: f64,
-    pos: Vector3<f64>,
-    u: Vector3<f64>,
-    rot: UnitQuaternion<f64>,
-    urot: UnitQuaternion<f64>,
+    pos: JVector3,
+    u: JVector3,
+    rot: JUnitQuaternion,
+    urot: JUnitQuaternion,
 }
 
 impl Ball {
@@ -64,14 +65,14 @@ impl Simulator {
 #[cfg(test)]
 mod tests {
     use consts;
-    use na::geometry::UnitQuaternion;
+    use geometry::JUnitQuaternion;
 
     #[test]
     fn test_quaternions() {
-        let q1 = UnitQuaternion::<f64>::identity();
+        let q1 = JUnitQuaternion::identity();
         assert_eq!(q1, q1 * q1);
         assert_eq!(q1, q1.powf(12345.));
 
-        let q2 = UnitQuaternion::from_euler_angles(0., 0., 2. * consts::PI);
+        let q2 = JUnitQuaternion::from_euler_angles(0., 0., 2. * consts::PI);
     }
 }
