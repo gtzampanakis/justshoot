@@ -1,5 +1,3 @@
-extern crate nalgebra as na;
-
 mod geometry;
 
 use geometry::{JVector3, JUnitQuaternion};
