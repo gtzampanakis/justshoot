@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 mod geometry;
 
 use geometry::{JVector3, JUnitQuaternion};
