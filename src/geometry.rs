@@ -6,20 +6,15 @@ use self::na::geometry::UnitQuaternion as NUnitQuaternion;
 pub type JVector3 = NVector3<f64>;
 pub type JUnitQuaternion = NUnitQuaternion<f64>;
 
-pub fn posv(p1: &JVector3, p2: &JVector3) -> JVector3 {
-    // Returns the vector that joins p1 to p2.
-    return p2 - p1;
-}
-
-pub fn norm_apprch_v (
+pub fn calc_norm_apprch_v (
     p1: &JVector3,
     p2: &JVector3,
     u1: &JVector3,
     u2: &JVector3,
 ) -> f64 {
-    // Returns the squared norm of the approach velocity of the two points.
+    // Returns the norm of the approach velocity of the two points.
 
-    let r = posv(p1, p2);
+    let r = p2 - p1;
 
     // Approach velcocity due to p1 =   u1 * r / |r|
     // Approach velcocity due to p2 = - u2 * r / |r|
@@ -38,7 +33,7 @@ mod tests {
     #[test]
     fn test_norm_apprch_v_1() {
         use JVector3;
-        use geometry::norm_apprch_v;
+        use geometry::calc_norm_apprch_v;
 
         let p1 = JVector3::new(0., 0., 0.);
         let p2 = JVector3::new(1., 1., 1.);
@@ -47,7 +42,7 @@ mod tests {
         let u2 = JVector3::new(-1., -1., -1.);
 
         close_enough(
-            norm_apprch_v(&p1, &p2, &u1, &u2),
+            calc_norm_apprch_v(&p1, &p2, &u1, &u2),
             2. * u1.norm()
         );
     }
@@ -55,7 +50,7 @@ mod tests {
     #[test]
     fn test_norm_apprch_v_2() {
         use JVector3;
-        use geometry::norm_apprch_v;
+        use geometry::calc_norm_apprch_v;
 
         let p1 = JVector3::new(0., 0., 0.);
         let p2 = JVector3::new(1., 1., 1.);
@@ -64,7 +59,7 @@ mod tests {
         let u2 = JVector3::new(1., 1., 1.);
 
         close_enough(
-            norm_apprch_v(&p1, &p2, &u1, &u2),
+            calc_norm_apprch_v(&p1, &p2, &u1, &u2),
             - 2. * u1.norm()
         );
     }
@@ -72,7 +67,7 @@ mod tests {
     #[test]
     fn test_norm_apprch_v_3() {
         use JVector3;
-        use geometry::norm_apprch_v;
+        use geometry::calc_norm_apprch_v;
 
         let p1 = JVector3::new(0., 0., 0.);
         let p2 = JVector3::new(1., 1., 1.);
@@ -81,7 +76,7 @@ mod tests {
         let u2 = JVector3::new(1., 1., 1.);
 
         close_enough(
-            norm_apprch_v(&p1, &p2, &u1, &u2),
+            calc_norm_apprch_v(&p1, &p2, &u1, &u2),
             0.
         );
     }

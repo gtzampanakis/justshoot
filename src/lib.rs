@@ -3,7 +3,7 @@
 
 mod geometry;
 
-use geometry::{JVector3, JUnitQuaternion};
+use geometry::{JVector3, JUnitQuaternion, calc_norm_apprch_v};
 
 mod consts {
     /* This is not intended to be used directly. Rather, values should be
@@ -25,11 +25,10 @@ struct WorldConf {
         pool:    165 g
     */
     ball_radius: f64,
+    ball_weight: f64,
 }
 
 struct Ball {
-    radius: f64,
-    weight: f64,
     pos: JVector3,
     u: JVector3,
     rot: JUnitQuaternion,
@@ -43,12 +42,18 @@ impl Ball {
     }
 }
 
+struct CollisionEvent {
+    i: usize, // index of ball_a
+    j: usize, // index of ball_b
+    unit_normal: JVector3,
+}
+
 struct Simulator {
     balls: Vec<Ball>,
     world_conf: WorldConf,
 // timestep. Keep it here to retain the option of altering its value
 // dynamically.
-    ts: f64, 
+    ts: f64,
 }
 
 impl Simulator {
@@ -60,6 +65,75 @@ impl Simulator {
 
     fn progress(&mut self) {
         self.apply_ball_velocities();
+    }
+
+    fn adjust_balls_for_collision(&mut self, coll_ev: &CollisionEvent) {
+        // The balls exchange the velocity vector components that coincide with
+        // the normal vector of the collision.
+
+        let ball_a = &mut self.balls[coll_ev.i];
+
+        // TODO
+
+        // let comp_a: JVector3 =   coll_ev.ball_a.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+        // let comp_b: JVector3 = - coll_ev.ball_b.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+
+        // coll_ev.ball_a.u -= comp_a;
+        // coll_ev.ball_a.u += comp_b;
+
+        // coll_ev.ball_b.u -= comp_b;
+        // coll_ev.ball_b.u += comp_a;
+    }
+
+    fn check_collisions(&mut self) {
+        // We only care about collisions with balls that are approaching each
+        // other. Non-approaching balls colliding is an artifact of the
+        // simulation process, which allows balls to penetrate each other.
+
+        let n_balls = self.balls.len();
+
+        let coll_evs: Vec<CollisionEvent> = Vec::new();
+
+        for i in 0 .. n_balls-1 {
+            for j in i+1 .. n_balls {
+
+                let ball_a = &self.balls[i];
+                let ball_b = &self.balls[j];
+
+                let norm_apprch_v = calc_norm_apprch_v(
+                    &ball_a.pos,
+                    &ball_b.pos,
+                    &ball_a.u,
+                    &ball_b.u,
+                );
+
+                let r = ball_b.pos - ball_a.pos;
+                let r_norm = r.norm();
+
+                if r_norm > 0. {
+                    // Avoids the division-by-zero case where balls are in the
+                    // same place.
+                    if norm_apprch_v > 0. {
+                        // Balls are approaching.
+                        if r_norm < 2. * self.world_conf.ball_radius {
+                            // Balls are colliding.
+                            let coll_ev = CollisionEvent {
+                                i: i,
+                                j: j,
+                                unit_normal: r / r_norm,
+                            };
+
+                        }
+                    }
+                }
+
+            }
+        }
+
+        for coll_ev in coll_evs.iter() {
+            self.adjust_balls_for_collision(coll_ev);
+        }
+
     }
 }
 
