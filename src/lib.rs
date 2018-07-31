@@ -65,9 +65,10 @@ impl Simulator {
 
     fn progress(&mut self) {
         self.apply_ball_velocities();
+        self.check_ball_to_ball_collisions();
     }
 
-    fn adjust_balls_for_collision(&mut self, coll_ev: &CollisionEvent) {
+    fn adjust_ball_to_ball_collisions(&mut self, coll_ev: &CollisionEvent) {
         // The balls exchange the velocity vector components that coincide with
         // the normal vector of the collision.
 
@@ -96,53 +97,55 @@ impl Simulator {
 
     }
 
-    fn check_collisions(&mut self) {
+    fn check_ball_to_ball_collisions(&mut self) {
         // We only care about collisions with balls that are approaching each
         // other. Non-approaching balls colliding is an artifact of the
         // simulation process, which allows balls to penetrate each other.
 
         let n_balls = self.balls.len();
 
-        let coll_evs: Vec<CollisionEvent> = Vec::new();
-
         for i in 0 .. n_balls-1 {
             for j in i+1 .. n_balls {
 
-                let ball_a = &self.balls[i];
-                let ball_b = &self.balls[j];
+                let mut coll_ev_maybe: Option<CollisionEvent> = None;
+                {
+                    let ball_a = &self.balls[i];
+                    let ball_b = &self.balls[j];
 
-                let norm_apprch_v = calc_norm_apprch_v(
-                    &ball_a.pos,
-                    &ball_b.pos,
-                    &ball_a.u,
-                    &ball_b.u,
-                );
+                    let norm_apprch_v = calc_norm_apprch_v(
+                        &ball_a.pos,
+                        &ball_b.pos,
+                        &ball_a.u,
+                        &ball_b.u,
+                    );
 
-                let r = ball_b.pos - ball_a.pos;
-                let r_norm = r.norm();
+                    let r = ball_b.pos - ball_a.pos;
+                    let r_norm = r.norm();
 
-                if r_norm > 0. {
-                    // Avoids the division-by-zero case where balls are in the
-                    // same place.
-                    if norm_apprch_v > 0. {
-                        // Balls are approaching.
-                        if r_norm < 2. * self.world_conf.ball_radius {
-                            // Balls are colliding.
-                            let coll_ev = CollisionEvent {
-                                i: i,
-                                j: j,
-                                unit_normal: r / r_norm,
-                            };
-
+                    if r_norm > 0. {
+                        // Avoids the division-by-zero case where balls are in the
+                        // same place.
+                        if norm_apprch_v > 0. {
+                            // Balls are approaching.
+                            if r_norm < 2. * self.world_conf.ball_radius {
+                                // Balls are colliding.
+                                coll_ev_maybe = Some(
+                                    CollisionEvent {
+                                        i: i,
+                                        j: j,
+                                        unit_normal: r / r_norm,
+                                    }
+                                );
+                            }
                         }
                     }
                 }
 
-            }
-        }
+                if let Some(coll_ev) = coll_ev_maybe {
+                    self.adjust_ball_to_ball_collisions(&coll_ev);
+                }
 
-        for coll_ev in coll_evs.iter() {
-            self.adjust_balls_for_collision(coll_ev);
+            }
         }
 
     }
@@ -151,7 +154,10 @@ impl Simulator {
 #[cfg(test)]
 mod tests {
     use consts;
-    use geometry::JUnitQuaternion;
+    use Ball;
+    use Simulator;
+    use WorldConf;
+    use geometry::{JVector3, JUnitQuaternion};
 
     #[test]
     fn test_quaternions() {
@@ -160,5 +166,47 @@ mod tests {
         assert_eq!(q1, q1.powf(12345.));
 
         let q2 = JUnitQuaternion::from_euler_angles(0., 0., 2. * consts::PI);
+    }
+
+    fn setup_test_check_ball_to_ball_collisions() -> Simulator {
+        let world_conf = WorldConf {
+            ball_radius: consts::POOL_BALL_RADIUS,
+            ball_weight: consts::POOL_BALL_WEIGHT,
+        };
+
+        let balls = vec![
+            Ball {
+                pos: JVector3::new(0., 0., 0.),
+                u: JVector3::new(1., 0.001, 0.),
+                rot: JUnitQuaternion::identity(),
+                urot: JUnitQuaternion::identity(),
+            },
+            Ball {
+                pos: JVector3::new(1., 0., 0.),
+                u: JVector3::new(0., 0., 0.),
+                rot: JUnitQuaternion::identity(),
+                urot: JUnitQuaternion::identity(),
+            },
+        ];
+
+        let simulator = Simulator {
+            balls: balls,
+            world_conf: world_conf,
+            ts: 1e-3,
+        };
+
+        simulator
+    }
+
+    #[test]
+    fn test_check_ball_to_ball_collisions() {
+        let mut simulator = setup_test_check_ball_to_ball_collisions();
+
+        for stepi in 0..1000 {
+            simulator.progress();
+            println!("{:?} {:?}", simulator.balls[0].pos, simulator.balls[1].pos);
+            println!("{:?} {:?}", simulator.balls[0].u, simulator.balls[1].u);
+            println!("");
+        }
     }
 }
