@@ -71,18 +71,29 @@ impl Simulator {
         // The balls exchange the velocity vector components that coincide with
         // the normal vector of the collision.
 
-        let ball_a = &mut self.balls[coll_ev.i];
+        let comp_a: JVector3;
+        let comp_b: JVector3;
 
-        // TODO
+        {
+            let ball_a = &self.balls[coll_ev.i];
+            let ball_b = &self.balls[coll_ev.j];
 
-        // let comp_a: JVector3 =   coll_ev.ball_a.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
-        // let comp_b: JVector3 = - coll_ev.ball_b.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+            comp_a =   ball_a.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+            comp_b = - ball_b.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+        }
 
-        // coll_ev.ball_a.u -= comp_a;
-        // coll_ev.ball_a.u += comp_b;
+        {
+            let ball_a = &mut self.balls[coll_ev.i];
+            ball_a.u -= comp_a;
+            ball_a.u += comp_b;
+        }
 
-        // coll_ev.ball_b.u -= comp_b;
-        // coll_ev.ball_b.u += comp_a;
+        {
+            let ball_b = &mut self.balls[coll_ev.j];
+            ball_b.u -= comp_b;
+            ball_b.u += comp_a;
+        }
+
     }
 
     fn check_collisions(&mut self) {
