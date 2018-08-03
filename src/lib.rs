@@ -28,6 +28,7 @@ struct WorldConf {
     ball_weight: f64,
 }
 
+#[derive(Clone)]
 struct Ball {
     pos: JVector3,
     u: JVector3,
@@ -42,6 +43,52 @@ impl Ball {
     }
 }
 
+struct SimulationState {
+    t: f64,
+    balls: Vec<Ball>,
+}
+
+struct SimulationStateSeq {
+    states: Vec<SimulationState>,
+}
+
+impl SimulationStateSeq {
+
+    fn get_interpolated_at(&self, t: f64) -> Option<SimulationState> {
+        let mut state_pair_maybe = None;
+
+        for i in 0..self.states.len() {
+            let state = &self.states[i];
+            if state.t > t {
+                state_pair_maybe = Some((
+                    &self.states[i-1],
+                    &self.states[i],
+                ));
+                break;
+            }
+        }
+
+        match state_pair_maybe {
+            Some((state1, state2)) => {
+                let mut balls = Vec::new();
+                
+                // TODO: The actual interpolation
+                for ball in state1.balls.iter() {
+                    balls.push(ball.clone());
+                }
+
+                Some(SimulationState{
+                    t: state1.t,
+                    balls: balls,
+                })
+            },
+            None => None,
+        }
+
+    }
+
+}
+
 struct CollisionEvent {
     i: usize, // index of ball_a
     j: usize, // index of ball_b
@@ -54,18 +101,54 @@ struct Simulator {
 // timestep. Keep it here to retain the option of altering its value
 // dynamically.
     ts: f64,
+    t: f64,
+    t_hard_limit: f64,
 }
 
 impl Simulator {
+
+    fn new(
+        balls: Vec<Ball>,
+        world_conf: WorldConf,
+        ts: f64,
+    ) -> Self {
+        Simulator {
+            balls: balls,
+            world_conf: world_conf,
+            ts: ts,
+            t: 0.,
+            t_hard_limit: 30.,
+        }
+    }
+
     fn apply_ball_velocities(&mut self) {
         for ball in self.balls.iter_mut() {
             ball.apply_velocities(self.ts);
         }
     }
 
+    fn run_complete_simulation(&mut self) -> SimulationStateSeq {
+        let mut states = Vec::new();
+
+        loop {
+            self.progress();
+            if self.t >= self.t_hard_limit {
+                break;
+            }
+            let simulation_state = SimulationState{
+                t: self.t,
+                balls: self.balls.clone(),
+            };
+            states.push(simulation_state);
+        }
+
+        SimulationStateSeq{states: states}
+    }
+
     fn progress(&mut self) {
         self.apply_ball_velocities();
         self.check_ball_to_ball_collisions();
+        self.t += self.ts;
     }
 
     fn adjust_ball_to_ball_collisions(&mut self, coll_ev: &CollisionEvent) {
@@ -151,6 +234,14 @@ impl Simulator {
     }
 }
 
+struct Drawer {
+
+}
+
+impl Drawer {
+
+}
+
 #[cfg(test)]
 mod tests {
     use consts;
@@ -189,11 +280,11 @@ mod tests {
             },
         ];
 
-        let simulator = Simulator {
-            balls: balls,
-            world_conf: world_conf,
-            ts: 1e-3,
-        };
+        let simulator = Simulator::new(
+            balls,
+            world_conf,
+            1e-3,
+        );
 
         simulator
     }
