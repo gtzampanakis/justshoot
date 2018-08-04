@@ -3,7 +3,13 @@
 
 mod geometry;
 
-use geometry::{JVector3, JUnitQuaternion, calc_norm_apprch_v};
+use geometry::{
+    JVector3,
+    JUnitQuaternion,
+    calc_norm_apprch_v,
+    calc_interpolated_vector,
+    calc_interpolated_quaternion,
+};
 
 mod consts {
     /* This is not intended to be used directly. Rather, values should be
@@ -54,37 +60,106 @@ struct SimulationStateSeq {
 
 impl SimulationStateSeq {
 
-    fn get_interpolated_at(&self, t: f64) -> Option<SimulationState> {
-        let mut state_pair_maybe = None;
+    // fn get_interpolated_at(&self, t: f64) -> Option<SimulationState> {
+    //     let mut state_pair_maybe = None;
 
-        for i in 0..self.states.len() {
-            let state = &self.states[i];
-            if state.t > t {
-                state_pair_maybe = Some((
-                    &self.states[i-1],
-                    &self.states[i],
-                ));
-                break;
+    //     for i in 0..self.states.len() {
+    //         let state = &self.states[i];
+    //         if state.t > t {
+    //             state_pair_maybe = Some((
+    //                 &self.states[i-1],
+    //                 &self.states[i],
+    //             ));
+    //             break;
+    //         }
+    //     }
+
+    //     match state_pair_maybe {
+    //         Some((state1, state2)) => {
+    //             let mut balls = Vec::new();
+    //             
+    //             // TODO: The actual interpolation
+    //             for ball in state1.balls.iter() {
+    //                 balls.push(ball.clone());
+    //             }
+
+    //             Some(SimulationState{
+    //                 t: state1.t,
+    //                 balls: balls,
+    //             })
+    //         },
+    //         None => None,
+    //     }
+
+    // }
+
+    fn calc_interpolated_at(&self, t: f64) -> SimulationState {
+        let sl = self.states.len();
+
+        if sl == 0 {
+            panic!("calc_interpolated_at called on empty SimulationStateSeq");
+        }
+
+        if t <= self.states[0].t {
+            SimulationState {
+                t: t,
+                balls: self.states[0].balls.clone(),
             }
         }
-
-        match state_pair_maybe {
-            Some((state1, state2)) => {
-                let mut balls = Vec::new();
-                
-                // TODO: The actual interpolation
-                for ball in state1.balls.iter() {
-                    balls.push(ball.clone());
-                }
-
-                Some(SimulationState{
-                    t: state1.t,
-                    balls: balls,
-                })
-            },
-            None => None,
+        else if t >= self.states[sl-1].t {
+            SimulationState {
+                t: t,
+                balls: self.states[sl-1].balls.clone(),
+            }
         }
+        else {
+            // At this point we have at least two states. If there was only one
+            // state then one of the two preceding conditions would have been
+            // true.
+            let mut interpolated_balls;
 
+            for i in 0..sl-1 {
+                let (state1, state2) = (&self.states[i], &self.states[i+1]);
+
+                if state1.t <= t && state2.t >= t {
+                    interpolated_balls = Vec::new();
+
+                    for i in 0..state1.balls.len() {
+                        interpolated_balls.push(Ball{
+                            pos: calc_interpolated_vector(
+                                &state1.balls[i].pos,
+                                &state2.balls[i].pos,
+                                state1.t,
+                                state2.t,
+                                t
+                            ),
+                            rot: calc_interpolated_quaternion(
+                                &state1.balls[i].rot,
+                                &state2.balls[i].rot,
+                                state1.t,
+                                state2.t,
+                                t
+                            ),
+                            // It doesn't matter what we put in the velocities
+                            // because this information will only be used for
+                            // drawing. We are wasting some CPU cycles and some
+                            // memory but it doesn't matter because
+                            // interpolation is not in our critical path, I
+                            // think.
+                            u: JVector3::zeros(),
+                            urot: JUnitQuaternion::identity(),
+                        });
+                    }
+
+                    return SimulationState {
+                        t: t,
+                        balls: interpolated_balls,
+                    }
+                }
+            }
+
+            panic!("calc_interpolated_at finished without finding a result. This is unexpected.");
+        }
     }
 
 }

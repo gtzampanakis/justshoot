@@ -1,10 +1,7 @@
 extern crate nalgebra as na;
 
-use self::na::Vector3 as NVector3;
-use self::na::geometry::UnitQuaternion as NUnitQuaternion;
-
-pub type JVector3 = NVector3<f64>;
-pub type JUnitQuaternion = NUnitQuaternion<f64>;
+pub type JVector3 = self::na::Vector3<f64>;
+pub type JUnitQuaternion = self::na::geometry::UnitQuaternion<f64>;
 
 pub fn calc_norm_apprch_v (
     p1: &JVector3,
@@ -21,6 +18,40 @@ pub fn calc_norm_apprch_v (
     // Aggregate approach velocity  = (u1 - u2) * r / |r|
 
     (u1 - u2).dot(&r) / r.norm()
+}
+
+// For the interpolation we can also use the velocities that are stored in the
+// ball to calculate in a simpler way. Essenitally we would find the same
+// result, but without the slerp/nlerp hack.
+
+pub fn calc_interpolated_vector(
+    v1: &JVector3,
+    v2: &JVector3,
+    t1: f64,
+    t2: f64,
+    t:  f64,
+) -> JVector3 {
+    let w = (t - t1) / (t2 - t1);
+    (1. - w) * v1 + w * v2
+}
+
+pub fn calc_interpolated_quaternion(
+    q1: &JUnitQuaternion,
+    q2: &JUnitQuaternion,
+    t1: f64,
+    t2: f64,
+    t:  f64,
+) -> JUnitQuaternion {
+    // We will use slerp. However, slerp as provided by nalgebra fails when the
+    // angle between the quaternions is 180 degrees. My best guess is that this
+    // happens because in this case the algorithm does not know which way to
+    // turn. From the nalgebra docs it appears that nlerp does not have this
+    // problem. So let's use nlerp for this rare case.
+    let w = (t - t1) / (t2 - t1);
+    match q1.try_slerp(&q2, w, 0.) {
+        Some(slerped) => slerped,
+        None => q1.nlerp(&q2, w),
+    }
 }
 
 #[cfg(test)]
