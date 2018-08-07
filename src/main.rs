@@ -159,7 +159,8 @@ impl event::EventHandler for GameState {
                     self.graphics_conf.origin.x + (ball.pos.x as f32) * self.graphics_conf.pixels_per_meter,
                     self.graphics_conf.origin.y + (ball.pos.y as f32) * self.graphics_conf.pixels_per_meter,
                 ),
-                (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter,
+                (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter
+                                                               * (1. + ball.pos.z as f32),
                 0.01,
             );
         }
