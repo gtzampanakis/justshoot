@@ -52,46 +52,22 @@ pub struct SimulationState {
     balls: Vec<Ball>,
 }
 
-struct SimulationStateSeq {
-    states: Vec<SimulationState>,
+impl SimulationState {
+    fn from_simulator(simulator: &Simulator) -> Self {
+        SimulationState {
+            t: simulator.t,
+            balls: simulator.balls.clone(),
+        }
+    }
+}
+
+pub struct SimulationStateSeq {
+    pub states: Vec<SimulationState>,
 }
 
 impl SimulationStateSeq {
 
-    // fn get_interpolated_at(&self, t: f64) -> Option<SimulationState> {
-    //     let mut state_pair_maybe = None;
-
-    //     for i in 0..self.states.len() {
-    //         let state = &self.states[i];
-    //         if state.t > t {
-    //             state_pair_maybe = Some((
-    //                 &self.states[i-1],
-    //                 &self.states[i],
-    //             ));
-    //             break;
-    //         }
-    //     }
-
-    //     match state_pair_maybe {
-    //         Some((state1, state2)) => {
-    //             let mut balls = Vec::new();
-    //             
-    //             // TODO: The actual interpolation
-    //             for ball in state1.balls.iter() {
-    //                 balls.push(ball.clone());
-    //             }
-
-    //             Some(SimulationState{
-    //                 t: state1.t,
-    //                 balls: balls,
-    //             })
-    //         },
-    //         None => None,
-    //     }
-
-    // }
-
-    fn calc_interpolated_at(&self, t: f64) -> SimulationState {
+    pub fn calc_interpolated_at(&self, t: f64) -> SimulationState {
         let sl = self.states.len();
 
         if sl == 0 {
@@ -169,12 +145,12 @@ struct CollisionEvent {
 }
 
 pub struct Simulator {
-    balls: Vec<Ball>,
+    pub balls: Vec<Ball>,
     world_conf: WorldConf,
 // timestep. Keep it here to retain the option of altering its value
 // dynamically.
     ts: f64,
-    t: f64,
+    pub t: f64,
     t_hard_limit: f64,
 }
 
@@ -200,7 +176,7 @@ impl Simulator {
         }
     }
 
-    fn run_complete_simulation(&mut self) -> SimulationStateSeq {
+    pub fn run_complete_simulation(&mut self) -> SimulationStateSeq {
         let mut states = Vec::new();
 
         loop {
@@ -218,10 +194,12 @@ impl Simulator {
         SimulationStateSeq{states: states}
     }
 
-    fn progress(&mut self) {
+    pub fn progress(&mut self) -> SimulationState {
         self.apply_ball_velocities();
         self.check_ball_to_ball_collisions();
         self.t += self.ts;
+
+        SimulationState::from_simulator(self)
     }
 
     fn adjust_ball_to_ball_collisions(&mut self, coll_ev: &CollisionEvent) {
