@@ -146,7 +146,7 @@ struct CollisionEvent {
 
 pub struct Simulator {
     pub balls: Vec<Ball>,
-    world_conf: WorldConf,
+    pub world_conf: WorldConf,
 // timestep. Keep it here to retain the option of altering its value
 // dynamically.
     ts: f64,
@@ -255,6 +255,11 @@ impl Simulator {
 
                     let r = ball_b.pos - ball_a.pos;
                     let r_norm = r.norm();
+
+                    // println!("a_pos: {:?}", ball_a.pos);
+                    // println!("b_pos: {:?}", ball_b.pos);
+                    // println!("{:?}", r_norm);
+                    // println!("");
 
                     if r_norm > 0. {
                         // Avoids the division-by-zero case where balls are in the
