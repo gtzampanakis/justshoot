@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-mod geometry;
-
 use geometry::{
     JVector3,
     JUnitQuaternion,
@@ -11,7 +9,7 @@ use geometry::{
     calc_interpolated_quaternion,
 };
 
-mod consts {
+pub mod consts {
     /* This is not intended to be used directly. Rather, values should be
      * copied to WorldConf or to any other place in which they are needed. */
     pub const PI: f64 = ::std::f64::consts::PI;
@@ -21,7 +19,7 @@ mod consts {
     pub const ANGLE_MODICUM: f64 = 2. * ::std::f64::consts::PI / 10000.;
 }
 
-struct WorldConf {
+pub struct WorldConf {
     /* Common diameters:
         carom:   61.5 mm
         pool:    57.2 mm
@@ -30,16 +28,16 @@ struct WorldConf {
        Common weights:
         pool:    165 g
     */
-    ball_radius: f64,
-    ball_weight: f64,
+    pub ball_radius: f64,
+    pub ball_weight: f64,
 }
 
 #[derive(Clone)]
-struct Ball {
-    pos: JVector3,
-    u: JVector3,
-    rot: JUnitQuaternion,
-    urot: JUnitQuaternion,
+pub struct Ball {
+    pub pos: JVector3,
+    pub u: JVector3,
+    pub rot: JUnitQuaternion,
+    pub urot: JUnitQuaternion,
 }
 
 impl Ball {
@@ -49,7 +47,7 @@ impl Ball {
     }
 }
 
-struct SimulationState {
+pub struct SimulationState {
     t: f64,
     balls: Vec<Ball>,
 }
@@ -170,7 +168,7 @@ struct CollisionEvent {
     unit_normal: JVector3,
 }
 
-struct Simulator {
+pub struct Simulator {
     balls: Vec<Ball>,
     world_conf: WorldConf,
 // timestep. Keep it here to retain the option of altering its value
@@ -182,7 +180,7 @@ struct Simulator {
 
 impl Simulator {
 
-    fn new(
+    pub fn new(
         balls: Vec<Ball>,
         world_conf: WorldConf,
         ts: f64,

@@ -5,3 +5,4 @@ authors = ["Giorgos Tzampanakis"]
 
 [dependencies]
 nalgebra = "0.16.0"
+ggez = "0.4"

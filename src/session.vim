@@ -58,11 +58,15 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
 set shortmess=aoO
-badd +1 lib.rs
-badd +0 geometry.rs
+badd +6 lib.rs
+badd +1 geometry.rs
+badd +1 \Users\PC\dev\ggez\examples\astroblasto.rs
+badd +8 \Users\PC\dev\justshoot\Cargo.toml
+badd +3 \Users\PC\dev\ggez\docs\guides\HelloGgez.md
+badd +1 main.rs
 argglobal
 silent! argdel *
-edit lib.rs
+edit main.rs
 set splitbelow splitright
 wincmd _ | wincmd |
 vsplit
@@ -72,8 +76,8 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winminheight=1 winheight=1 winminwidth=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 118 + 117) / 235)
-exe 'vert 2resize ' . ((&columns * 116 + 117) / 235)
+exe 'vert 1resize ' . ((&columns * 117 + 117) / 235)
+exe 'vert 2resize ' . ((&columns * 117 + 117) / 235)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -189,11 +193,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 1 - ((0 * winheight(0) + 30) / 60)
+let s:l = 14 - ((13 * winheight(0) + 30) / 60)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
+14
 normal! 0
 lcd ~\dev\justshoot\src
 wincmd w
@@ -321,9 +325,8 @@ normal! zt
 normal! 0
 lcd ~\dev\justshoot\src
 wincmd w
-2wincmd w
-exe 'vert 1resize ' . ((&columns * 118 + 117) / 235)
-exe 'vert 2resize ' . ((&columns * 116 + 117) / 235)
+exe 'vert 1resize ' . ((&columns * 117 + 117) / 235)
+exe 'vert 2resize ' . ((&columns * 117 + 117) / 235)
 tabnext 1
 if exists('s:wipebuf') && s:wipebuf != bufnr('%')
   silent exe 'bwipe ' . s:wipebuf
