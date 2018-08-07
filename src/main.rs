@@ -41,7 +41,7 @@ impl GameState {
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(40., 0.0025, 0.),
+                pos: JVector3::new(40., 0.00125, 0.),
                 urot: JUnitQuaternion::identity(),
                 u: JVector3::new(0., 0., 0.),
                 rot: JUnitQuaternion::identity(),
@@ -88,7 +88,7 @@ impl event::EventHandler for GameState {
                     self.simulation_state_seq.calc_interpolated_at(t_elapsed_in_shot));
             }
 
-            println!("{:?}", t);
+            println!("fps: {:?}", timer::get_fps(ctx));
         }
 
     }
