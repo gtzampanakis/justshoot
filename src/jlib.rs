@@ -30,6 +30,7 @@ pub struct WorldConf {
     */
     pub ball_radius: f64,
     pub ball_weight: f64,
+    pub ball_ball_rest: f64,
 }
 
 #[derive(Clone)]
@@ -220,13 +221,13 @@ impl Simulator {
         {
             let ball_a = &mut self.balls[coll_ev.i];
             ball_a.u -= comp_a;
-            ball_a.u += comp_b;
+            ball_a.u += comp_b * self.world_conf.ball_ball_rest;
         }
 
         {
             let ball_b = &mut self.balls[coll_ev.j];
             ball_b.u -= comp_b;
-            ball_b.u += comp_a;
+            ball_b.u += comp_a * self.world_conf.ball_ball_rest;
         }
 
     }

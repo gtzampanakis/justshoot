@@ -58,6 +58,7 @@ impl GameState {
         let world_conf = WorldConf {
             ball_radius: consts::POOL_BALL_RADIUS,
             ball_weight: consts::POOL_BALL_WEIGHT,
+            ball_ball_rest: 0.95,
         };
 
         let balls = vec![
