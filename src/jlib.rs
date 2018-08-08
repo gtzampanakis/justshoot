@@ -16,7 +16,36 @@ pub mod consts {
     pub const POOL_BALL_RADIUS: f64 = 57.2 / 1000. / 2.;
     pub const POOL_BALL_WEIGHT: f64 = 165. / 1000.;
 
+    pub const BALL_BALL_REST: f64 = 0.95;
+    pub const BALL_CLOTH_REST: f64 = 0.50;
+
     pub const ANGLE_MODICUM: f64 = 2. * ::std::f64::consts::PI / 10000.;
+
+    /* Here are some data taken from http://billiards.colostate.edu/threads/physics.html:
+    
+    ball diameter: 2.25 in
+    ball mass: 6 oz
+    ball mass moment of inertia: 2/5 mR2
+    ball-ball coefficient of friction (μ): 0.03-0.08
+    ball-ball coefficient of restitution (e): 0.92-0.98
+    ball-cloth coefficient of rolling resistance (μ): 0.005 - 0.015
+    ball-cloth coefficient of sliding friction (μ): 0.15-0.4 (typical value: 0.2)
+    ball-cloth spin deceleration rate: 5-15 rad/sec2
+    ball-rail coefficient of restitution (e): 0.6-0.9
+    ball-table coefficient of restitution (e): 0.5
+    cue-tip-ball coefficient of friction (μ): 0.6
+    cue-tip-ball coefficient of restitution (e): 0.71-0.75 (leather tip), 0.81-0.87 (phenolic tip) 
+
+    touch: 1.5 mph = 2.2 fps
+    slow: 3 mph = 4.4 fps
+    medium-soft: 5 mph = 7.3 fps
+    medium: 7 mph = 10 fps
+    medium-fast: 8 mph = 12 fps
+    fast: 12 mph = 18 fps
+    power: 15-20 mph = 22-29 fps
+    powerful break: 25-30 mph = 36-44 fps
+
+    */
 }
 
 pub struct WorldConf {
@@ -31,6 +60,7 @@ pub struct WorldConf {
     pub ball_radius: f64,
     pub ball_weight: f64,
     pub ball_ball_rest: f64,
+    pub ball_cloth_rest: f64,
 }
 
 #[derive(Clone)]
@@ -139,9 +169,14 @@ impl SimulationStateSeq {
 
 }
 
-struct CollisionEvent {
+struct BallBallCollisionEvent {
     i: usize, // index of ball_a
     j: usize, // index of ball_b
+    unit_normal: JVector3,
+}
+
+struct BallClothCollisionEvent {
+    i: usize, // index of ball
     unit_normal: JVector3,
 }
 
@@ -203,7 +238,7 @@ impl Simulator {
         SimulationState::from_simulator(self)
     }
 
-    fn adjust_ball_to_ball_collisions(&mut self, coll_ev: &CollisionEvent) {
+    fn adjust_for_ball_to_ball_collisions(&mut self, coll_ev: &BallBallCollisionEvent) {
         // The balls exchange the velocity vector components that coincide with
         // the normal vector of the collision.
 
@@ -242,7 +277,7 @@ impl Simulator {
         for i in 0 .. n_balls-1 {
             for j in i+1 .. n_balls {
 
-                let mut coll_ev_maybe: Option<CollisionEvent> = None;
+                let mut coll_ev_maybe: Option<BallBallCollisionEvent> = None;
                 {
                     let ball_a = &self.balls[i];
                     let ball_b = &self.balls[j];
@@ -270,7 +305,7 @@ impl Simulator {
                             if r_norm < 2. * self.world_conf.ball_radius {
                                 // Balls are colliding.
                                 coll_ev_maybe = Some(
-                                    CollisionEvent {
+                                    BallBallCollisionEvent {
                                         i: i,
                                         j: j,
                                         unit_normal: r / r_norm,
@@ -282,12 +317,45 @@ impl Simulator {
                 }
 
                 if let Some(coll_ev) = coll_ev_maybe {
-                    self.adjust_ball_to_ball_collisions(&coll_ev);
+                    self.adjust_for_ball_to_ball_collisions(&coll_ev);
                 }
 
             }
         }
 
+    }
+
+    fn check_ball_to_cloth_collisions(&mut self) {
+        let n_balls = self.balls.len();
+        for i in 0 .. n_balls {
+            let mut coll_ev_maybe: Option<BallClothCollisionEvent> = None;
+            {
+                let ball = &self.balls[i];
+
+                let r = &ball.pos;
+                let r_norm = r.norm();
+
+                if r_norm > 0. {
+                    // Avoid division-by-zero.
+                    if ball.u.z < 0. {
+                        // Ball is approaching the cloth.
+                        if r_norm < self.world_conf.ball_radius {
+                            // Ball is colliding with the cloth.
+                            coll_ev_maybe = Some(
+                                BallClothCollisionEvent {
+                                    i: i,
+                                    unit_normal: r / r_norm,
+                                }
+                            );
+                        }
+                    }
+                }
+            }
+
+            if let Some(coll_ev) = coll_ev_maybe {
+                self.adjust_for_ball_to_cloth_collisions(&coll_ev);
+            }
+        }
     }
 }
 
