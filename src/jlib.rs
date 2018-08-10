@@ -233,6 +233,7 @@ impl Simulator {
     pub fn progress(&mut self) -> SimulationState {
         self.apply_ball_velocities();
         self.check_ball_to_ball_collisions();
+        self.check_ball_to_cloth_collisions();
         self.t += self.ts;
 
         SimulationState::from_simulator(self)
@@ -249,8 +250,12 @@ impl Simulator {
             let ball_a = &self.balls[coll_ev.i];
             let ball_b = &self.balls[coll_ev.j];
 
-            comp_a =   ball_a.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
-            comp_b = - ball_b.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+            comp_a = ball_a.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+            comp_b = ball_b.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+
+            // println!("{:?}", comp_a);
+            // println!("{:?}", comp_b);
+            // println!("");
         }
 
         {
@@ -265,6 +270,13 @@ impl Simulator {
             ball_b.u += comp_a * self.world_conf.ball_ball_rest;
         }
 
+    }
+
+    fn adjust_for_ball_to_cloth_collisions(&mut self, coll_ev: &BallClothCollisionEvent) {
+        let ball = &mut self.balls[coll_ev.i];
+        let comp = ball.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+        ball.u -= comp;
+        ball.u -= comp * self.world_conf.ball_cloth_rest;
     }
 
     fn check_ball_to_ball_collisions(&mut self) {
@@ -302,7 +314,7 @@ impl Simulator {
                         // same place.
                         if norm_apprch_v > 0. {
                             // Balls are approaching.
-                            if r_norm < 2. * self.world_conf.ball_radius {
+                            if r_norm <= 2. * self.world_conf.ball_radius {
                                 // Balls are colliding.
                                 coll_ev_maybe = Some(
                                     BallBallCollisionEvent {
@@ -332,22 +344,16 @@ impl Simulator {
             {
                 let ball = &self.balls[i];
 
-                let r = &ball.pos;
-                let r_norm = r.norm();
-
-                if r_norm > 0. {
-                    // Avoid division-by-zero.
-                    if ball.u.z < 0. {
-                        // Ball is approaching the cloth.
-                        if r_norm < self.world_conf.ball_radius {
-                            // Ball is colliding with the cloth.
-                            coll_ev_maybe = Some(
-                                BallClothCollisionEvent {
-                                    i: i,
-                                    unit_normal: r / r_norm,
-                                }
-                            );
-                        }
+                if ball.u.z < 0. {
+                    // Ball is approaching the cloth.
+                    if ball.pos.z <= self.world_conf.ball_radius {
+                        // Ball is colliding with the cloth.
+                        coll_ev_maybe = Some(
+                            BallClothCollisionEvent {
+                                i: i,
+                                unit_normal: JVector3::new(0., 0., 1.,),
+                            }
+                        );
                     }
                 }
             }

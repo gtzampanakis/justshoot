@@ -24,6 +24,7 @@ struct GraphicsConf {
     height: u32,
     pixels_per_meter: f32,
     origin: JGVector3,
+    eye_height: f32,
 }
 
 impl GraphicsConf {
@@ -53,6 +54,7 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
+            eye_height: 1.,
         };
 
         let world_conf = WorldConf {
@@ -64,27 +66,15 @@ impl GameState {
 
         let balls = vec![
             Ball {
-                pos: JVector3::new(-0.5, 0., 0.),
+                pos: JVector3::new(-0.2, 0.0875, 1.),
                 urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0.5, 0., 0.),
+                u: JVector3::new(0.09, 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(0.0, 0.0475, 0.),
+                pos: JVector3::new(0.2, 0.0875, 1.),
                 urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0., 0., 0.),
-                rot: JUnitQuaternion::identity(),
-            },
-            Ball {
-                pos: JVector3::new(0.2, 0.0875, 0.),
-                urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0., 0., 0.),
-                rot: JUnitQuaternion::identity(),
-            },
-            Ball {
-                pos: JVector3::new(0.0, -0.0575, 0.),
-                urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0., 0., 0.),
+                u: JVector3::new(-0.24, 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
         ];
@@ -140,7 +130,7 @@ impl event::EventHandler for GameState {
                     self.simulation_state_seq.calc_interpolated_at(t_elapsed_in_shot));
             }
 
-            println!("fps: {:?}", timer::get_fps(ctx));
+            // println!("fps: {:?}", timer::get_fps(ctx));
 
         }
 
@@ -161,8 +151,8 @@ impl event::EventHandler for GameState {
                     self.graphics_conf.origin.x + (ball.pos.x as f32) * self.graphics_conf.pixels_per_meter,
                     self.graphics_conf.origin.y + (ball.pos.y as f32) * self.graphics_conf.pixels_per_meter,
                 ),
-                (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter
-                                                               * (1. + ball.pos.z as f32),
+                // TODO: perspective
+                (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter,
                 0.01,
             );
         }
