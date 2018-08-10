@@ -66,21 +66,21 @@ impl GameState {
 
         let balls = vec![
             Ball {
-                pos: JVector3::new(-0.2, 0.0875, 1.),
+                pos: JVector3::new(-0.2, 0.0875, 5.),
                 urot: JUnitQuaternion::identity(),
                 u: JVector3::new(0.125, 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(-0.1, 0.0875, 1.),
+                pos: JVector3::new(-0.1, 0.0875, 5.),
                 urot: JUnitQuaternion::identity(),
                 u: JVector3::new(0.0625, 0.002, 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(-0.0, 0.0875, 1.),
+                pos: JVector3::new(0.0, 0.0875, 5.),
                 urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0.00625, 0.002, 0.),
+                u: JVector3::new(-0.01625, 0.002, 0.),
                 rot: JUnitQuaternion::identity(),
             },
         ];
@@ -157,9 +157,10 @@ impl event::EventHandler for GameState {
                     self.graphics_conf.origin.x + (ball.pos.x as f32) * self.graphics_conf.pixels_per_meter,
                     self.graphics_conf.origin.y + (ball.pos.y as f32) * self.graphics_conf.pixels_per_meter,
                 ),
+                // orthographic projection
                 // TODO: perspective
                 (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter,
-                0.01,
+                0.001,
             );
         }
     }
