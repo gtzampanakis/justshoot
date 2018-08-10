@@ -68,13 +68,13 @@ impl GameState {
             Ball {
                 pos: JVector3::new(-0.2, 0.0875, 1.),
                 urot: JUnitQuaternion::identity(),
-                u: JVector3::new(0.09, 0., 0.),
+                u: JVector3::new(0.125, 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(0.2, 0.0875, 1.),
+                pos: JVector3::new(-0.1, 0.0875, 1.),
                 urot: JUnitQuaternion::identity(),
-                u: JVector3::new(-0.24, 0., 0.),
+                u: JVector3::new(0.0625, 0.002, 0.),
                 rot: JUnitQuaternion::identity(),
             },
         ];
