@@ -54,6 +54,10 @@ impl GameState {
             ball_weight: consts::POOL_BALL_WEIGHT,
             ball_ball_rest: consts::BALL_BALL_REST,
             ball_cloth_rest: consts::BALL_CLOTH_REST,
+            ball_spot_poss: vec![
+                JUnitVector3::new_normalize(JVector3::new(0., 0., 1.)),
+                JUnitVector3::new_normalize(JVector3::new(0., 0., -1.)),
+            ],
             ball_spot_radius_factor: consts::BALL_SPOT_RADIUS_FACTOR,
         };
 
@@ -164,30 +168,32 @@ impl event::EventHandler for GameState {
 
                 // Add some spots on the balls in order to see the rotation.
                 // The spot starts on the top of the ball.
-                let spot_initial = JVector3::new(0., 0., self.simulator.world_conf.ball_radius);
-                let spot_rotated =
-                        ball.rot.quaternion()
-                    *   JQuaternion::new(0., spot_initial.x, spot_initial.y, spot_initial.z)
-                    *   ball.rot.inverse().quaternion();
-                let spot_as_vector4 = spot_rotated.as_vector();
-                let spot_as_vector = JVector3::new(spot_as_vector4.x, spot_as_vector4.y, spot_as_vector4.z);
-                if spot_as_vector.z > 0. {
+                for spot_initial_unit in self.simulator.world_conf.ball_spot_poss.iter() {
+                    let spot_initial = spot_initial_unit.unwrap() * self.simulator.world_conf.ball_radius;
+                    let spot_rotated =
+                            ball.rot.quaternion()
+                        *   JQuaternion::new(0., spot_initial.x, spot_initial.y, spot_initial.z)
+                        *   ball.rot.inverse().quaternion();
+                    let spot_as_vector4 = spot_rotated.as_vector();
+                    let spot_as_vector = JVector3::new(spot_as_vector4.x, spot_as_vector4.y, spot_as_vector4.z);
+                    if spot_as_vector.z > 0. {
 
-                    let spot_translated = spot_as_vector + ball.pos;
+                        let spot_translated = spot_as_vector + ball.pos;
 
-                    graphics::set_color(ctx, graphics::Color::from_rgb(255, 20, 20));
-                    let spot_graphic = graphics::circle(
-                        ctx,
-                        graphics::DrawMode::Fill,
-                        graphics::Point2::new(
-                            self.graphics_conf.origin.x + (spot_translated.x as f32) * scale,
-                            self.graphics_conf.origin.y + (spot_translated.y as f32) * scale,
-                        ),
-                        (self.simulator.world_conf.ball_radius as f32)
-                            * (self.simulator.world_conf.ball_spot_radius_factor as f32) * scale,
-                        0.001,
-                    );
+                        graphics::set_color(ctx, graphics::Color::from_rgb(255, 20, 20));
+                        let spot_graphic = graphics::circle(
+                            ctx,
+                            graphics::DrawMode::Fill,
+                            graphics::Point2::new(
+                                self.graphics_conf.origin.x + (spot_translated.x as f32) * scale,
+                                self.graphics_conf.origin.y + (spot_translated.y as f32) * scale,
+                            ),
+                            (self.simulator.world_conf.ball_radius as f32)
+                                * (self.simulator.world_conf.ball_spot_radius_factor as f32) * scale,
+                            0.001,
+                        );
 
+                    }
                 }
 
             }

@@ -64,6 +64,7 @@ pub struct WorldConf {
     pub ball_weight: f64,
     pub ball_ball_rest: f64,
     pub ball_cloth_rest: f64,
+    pub ball_spot_poss: Vec<JUnitVector3>,
     pub ball_spot_radius_factor: f64,
 }
 
