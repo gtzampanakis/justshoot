@@ -3,6 +3,7 @@
 
 use geometry::{
     JVector3,
+    JUnitVector3,
     JUnitQuaternion,
     calc_norm_apprch_v,
     calc_interpolated_vector,
@@ -71,13 +72,22 @@ pub struct Ball {
     pub pos: JVector3,
     pub u: JVector3,
     pub rot: JUnitQuaternion,
-    pub urot: JUnitQuaternion,
+    // Using separate axis and angle for the rotation velocity. We cannot
+    // simply use a unit quaternion because it will not allow us to represent a
+    // rotation faster than 2*pi radians per second.
+    pub urot_axis: JUnitVector3,
+    pub urot_angle: f64,
 }
 
 impl Ball {
     fn apply_velocities(&mut self, ts: f64) {
         self.pos += self.u * ts;
-        self.rot =  self.urot.powf(ts) * self.rot;
+        // self.rot =  self.urot.powf(ts) * self.rot;
+        let angle = self.urot_angle * ts;
+        let urot = JUnitQuaternion::from_axis_angle(
+            &self.urot_axis, angle);
+        self.rot = urot * self.rot;
+
         // println!("{:?}", self.rot);
     }
 }
@@ -156,7 +166,8 @@ impl SimulationStateSeq {
                             // interpolation is not in our critical path, I
                             // think.
                             u: JVector3::zeros(),
-                            urot: JUnitQuaternion::identity(),
+                            urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0., 0.)),
+                            urot_angle: 0.,
                         });
                     }
 

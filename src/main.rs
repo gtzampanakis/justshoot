@@ -15,6 +15,7 @@ use jlib::{
 
 use geometry::{
     JVector3,
+    JUnitVector3,
     JGVector3,
     JQuaternion,
     JUnitQuaternion,
@@ -59,20 +60,23 @@ impl GameState {
         let balls = vec![
             Ball {
                 pos: JVector3::new(-0.2, 0.0875, 5.),
-                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.4 * 3.14, 0.8 * 3.14),
-                u: JVector3::new(0.125, 0., 0.),
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.5, 2.2)),
+                urot_angle: 8. * 3.14,
+                u: JVector3::new(0.125, 0., 0.) * 0.4,
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
                 pos: JVector3::new(-0.1, 0.0875, 5.),
-                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.1 * 3.14, 0.),
-                u: JVector3::new(0.0625, 0.002, 0.),
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(13., 0.4, 0.1)),
+                urot_angle: 2. * 3.14,
+                u: JVector3::new(0.0625, 0.002, 0.) * 0.4,
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
                 pos: JVector3::new(0.0, 0.0875, 5.),
-                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.1 * 3.14, 0.3 * 3.14),
-                u: JVector3::new(-0.01625, 0.002, 0.),
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.2, 0.)),
+                urot_angle: 12. * 3.14,
+                u: JVector3::new(-0.01625, 0.002, -8.) * 0.4,
                 rot: JUnitQuaternion::identity(),
             },
         ];
