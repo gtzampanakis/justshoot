@@ -46,10 +46,11 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
-            eye_height: 6.,
+            eye_height: 2.5,
         };
 
         let world_conf = WorldConf {
+            gravity: consts::GRAVITY,
             ball_radius: consts::POOL_BALL_RADIUS,
             ball_weight: consts::POOL_BALL_WEIGHT,
             ball_ball_rest: consts::BALL_BALL_REST,
@@ -70,14 +71,14 @@ impl GameState {
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(-0.1, 0.0875, 5.),
+                pos: JVector3::new(-0.1, 0.0875, 20.),
                 urot_axis: JUnitVector3::new_normalize(JVector3::new(13., 0.4, 0.1)),
                 urot_angle: 2. * 3.14,
-                u: JVector3::new(0.0625, 0.002, 0.) * 0.4,
+                u: JVector3::new(0.0, 0.000, 0.) * 0.4,
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
-                pos: JVector3::new(0.0, 0.0875, 5.),
+                pos: JVector3::new(0.0, 0.0875, 25.),
                 urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.2, 0.)),
                 urot_angle: 12. * 3.14,
                 u: JVector3::new(-0.01625, 0.002, -8.) * 0.4,
@@ -120,16 +121,17 @@ impl event::EventHandler for GameState {
             while self.simulator.t < t_elapsed_in_shot {
                 let simulation_state = self.simulator.progress();
 
-                // for ball in self.simulator.balls.iter() {
-                //     println!("{:?}", ball.pos);
-                // }
-                // println!("");
-
                 if self.simulation_state_seq.states.len() == 2 {
                     self.simulation_state_seq.states.remove(0);
                 }
                 self.simulation_state_seq.states.push(simulation_state);
             }
+
+            // for ball in self.simulator.balls.iter() {
+            //     println!("{:?} / {:?}", ball.pos.z, self.simulator.world_conf.ball_radius);
+            // }
+            // println!("");
+
 
             if !self.simulation_state_seq.states.is_empty() {
                 self.simulation_state = Some(

@@ -14,6 +14,7 @@ pub mod consts {
     /* This is not intended to be used directly. Rather, values should be
      * copied to WorldConf or to any other place in which they are needed. */
     pub const PI: f64 = ::std::f64::consts::PI;
+    pub const GRAVITY: f64 = -9.81;
     pub const POOL_BALL_RADIUS: f64 = 57.2 / 1000. / 2.;
     pub const POOL_BALL_WEIGHT: f64 = 165. / 1000.;
 
@@ -66,6 +67,7 @@ pub struct WorldConf {
     pub ball_cloth_rest: f64,
     pub ball_spot_poss: Vec<JUnitVector3>,
     pub ball_spot_radius_factor: f64,
+    pub gravity: f64,
 }
 
 #[derive(Clone)]
@@ -222,6 +224,14 @@ impl Simulator {
         }
     }
 
+    fn apply_gravity(&mut self) {
+        for ball in self.balls.iter_mut() {
+            if ball.pos.z > self.world_conf.ball_radius {
+                ball.u.z += self.world_conf.gravity * self.ts;
+            }
+        }
+    }
+
     fn apply_ball_velocities(&mut self) {
         for ball in self.balls.iter_mut() {
             ball.apply_velocities(self.ts);
@@ -247,6 +257,7 @@ impl Simulator {
     }
 
     pub fn progress(&mut self) -> SimulationState {
+        self.apply_gravity();
         self.apply_ball_velocities();
         self.check_ball_to_ball_collisions();
         self.check_ball_to_cloth_collisions();
