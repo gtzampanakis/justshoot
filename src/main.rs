@@ -16,6 +16,7 @@ use jlib::{
 use geometry::{
     JVector3,
     JGVector3,
+    JQuaternion,
     JUnitQuaternion,
 };
 
@@ -24,17 +25,7 @@ struct GraphicsConf {
     height: u32,
     pixels_per_meter: f32,
     origin: JGVector3,
-    eye_height: f32,
-}
-
-impl GraphicsConf {
-    fn pos_to_graph(&self, v: &JVector3) -> JGVector3 {
-        JGVector3::new(
-            (v.x as f32) * self.pixels_per_meter,
-            (v.y as f32) * self.pixels_per_meter,
-            (v.z as f32) * self.pixels_per_meter,
-        )
-    }
+    eye_height: f64,
 }
 
 
@@ -54,7 +45,7 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
-            eye_height: 1.,
+            eye_height: 6.,
         };
 
         let world_conf = WorldConf {
@@ -62,24 +53,25 @@ impl GameState {
             ball_weight: consts::POOL_BALL_WEIGHT,
             ball_ball_rest: consts::BALL_BALL_REST,
             ball_cloth_rest: consts::BALL_CLOTH_REST,
+            ball_spot_radius_factor: consts::BALL_SPOT_RADIUS_FACTOR,
         };
 
         let balls = vec![
             Ball {
                 pos: JVector3::new(-0.2, 0.0875, 5.),
-                urot: JUnitQuaternion::identity(),
+                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.4 * 3.14, 0.8 * 3.14),
                 u: JVector3::new(0.125, 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
                 pos: JVector3::new(-0.1, 0.0875, 5.),
-                urot: JUnitQuaternion::identity(),
+                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.1 * 3.14, 0.),
                 u: JVector3::new(0.0625, 0.002, 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
                 pos: JVector3::new(0.0, 0.0875, 5.),
-                urot: JUnitQuaternion::identity(),
+                urot: JUnitQuaternion::from_euler_angles(0.2 * 3.14, 0.1 * 3.14, 0.3 * 3.14),
                 u: JVector3::new(-0.01625, 0.002, 0.),
                 rot: JUnitQuaternion::identity(),
             },
@@ -150,18 +142,51 @@ impl event::EventHandler for GameState {
 
     if let Some(ref simulation_state) = self.simulation_state {
         for ball in self.simulator.balls.iter() {
-            let ball_graphic = graphics::circle(
-                ctx,
-                graphics::DrawMode::Fill,
-                graphics::Point2::new(
-                    self.graphics_conf.origin.x + (ball.pos.x as f32) * self.graphics_conf.pixels_per_meter,
-                    self.graphics_conf.origin.y + (ball.pos.y as f32) * self.graphics_conf.pixels_per_meter,
-                ),
-                // orthographic projection
-                // TODO: perspective
-                (self.simulator.world_conf.ball_radius as f32) * self.graphics_conf.pixels_per_meter,
-                0.001,
-            );
+            if ball.pos.z < self.graphics_conf.eye_height {
+                let distance = (ball.pos.z - self.graphics_conf.eye_height).abs() as f32;
+                let scale = self.graphics_conf.pixels_per_meter / distance; 
+
+                graphics::set_color(ctx, graphics::Color::from_rgb(255, 255, 255));
+                let ball_graphic = graphics::circle(
+                    ctx,
+                    graphics::DrawMode::Fill,
+                    graphics::Point2::new(
+                        self.graphics_conf.origin.x + (ball.pos.x as f32) * scale,
+                        self.graphics_conf.origin.y + (ball.pos.y as f32) * scale,
+                    ),
+                    (self.simulator.world_conf.ball_radius as f32) * scale,
+                    0.001,
+                );
+
+                // Add some spots on the balls in order to see the rotation.
+                // The spot starts on the top of the ball.
+                let spot_initial = JVector3::new(0., 0., self.simulator.world_conf.ball_radius);
+                let spot_rotated =
+                        ball.rot.quaternion()
+                    *   JQuaternion::new(0., spot_initial.x, spot_initial.y, spot_initial.z)
+                    *   ball.rot.inverse().quaternion();
+                let spot_as_vector4 = spot_rotated.as_vector();
+                let spot_as_vector = JVector3::new(spot_as_vector4.x, spot_as_vector4.y, spot_as_vector4.z);
+                if spot_as_vector.z > 0. {
+
+                    let spot_translated = spot_as_vector + ball.pos;
+
+                    graphics::set_color(ctx, graphics::Color::from_rgb(255, 20, 20));
+                    let spot_graphic = graphics::circle(
+                        ctx,
+                        graphics::DrawMode::Fill,
+                        graphics::Point2::new(
+                            self.graphics_conf.origin.x + (spot_translated.x as f32) * scale,
+                            self.graphics_conf.origin.y + (spot_translated.y as f32) * scale,
+                        ),
+                        (self.simulator.world_conf.ball_radius as f32)
+                            * (self.simulator.world_conf.ball_spot_radius_factor as f32) * scale,
+                        0.001,
+                    );
+
+                }
+
+            }
         }
     }
 

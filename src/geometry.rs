@@ -2,6 +2,7 @@ extern crate nalgebra as na;
 
 pub type JVector3 = self::na::Vector3<f64>;
 pub type JGVector3 = self::na::Vector3<f32>; // Use this for graphics, ggez uses f32.
+pub type JQuaternion = self::na::geometry::Quaternion<f64>;
 pub type JUnitQuaternion = self::na::geometry::UnitQuaternion<f64>;
 
 pub fn calc_norm_apprch_v (

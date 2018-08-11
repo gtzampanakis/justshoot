@@ -19,6 +19,8 @@ pub mod consts {
     pub const BALL_BALL_REST: f64 = 0.95;
     pub const BALL_CLOTH_REST: f64 = 0.50;
 
+    pub const BALL_SPOT_RADIUS_FACTOR: f64 = 0.1;
+
     pub const ANGLE_MODICUM: f64 = 2. * ::std::f64::consts::PI / 10000.;
 
     /* Here are some data taken from http://billiards.colostate.edu/threads/physics.html:
@@ -61,6 +63,7 @@ pub struct WorldConf {
     pub ball_weight: f64,
     pub ball_ball_rest: f64,
     pub ball_cloth_rest: f64,
+    pub ball_spot_radius_factor: f64,
 }
 
 #[derive(Clone)]
@@ -75,6 +78,7 @@ impl Ball {
     fn apply_velocities(&mut self, ts: f64) {
         self.pos += self.u * ts;
         self.rot =  self.urot.powf(ts) * self.rot;
+        // println!("{:?}", self.rot);
     }
 }
 
