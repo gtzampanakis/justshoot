@@ -25,9 +25,6 @@ pub mod consts {
 
     pub const ANGLE_MODICUM: f64 = 2. * ::std::f64::consts::PI / 10000.;
 
-    pub const SNAP_TO_CLOTH_MARGIN_POS: f64 = 0.00001;
-    pub const SNAP_TO_CLOTH_MARGIN_U: f64 = 0.001;
-
     /* Here are some data taken from http://billiards.colostate.edu/threads/physics.html:
     
     ball diameter: 2.25 in
@@ -71,8 +68,6 @@ pub struct WorldConf {
     pub ball_spot_poss: Vec<JUnitVector3>,
     pub ball_spot_radius_factor: f64,
     pub gravity: f64,
-    pub snap_to_cloth_margin_pos: f64,
-    pub snap_to_cloth_margin_u: f64,
 }
 
 #[derive(Clone)]
@@ -265,8 +260,15 @@ impl Simulator {
     pub fn progress(&mut self) -> SimulationState {
         self.check_ball_to_ball_collisions();
         self.check_ball_to_cloth_collisions();
+        // check_snap_to_cloth can only fullfil its purpose if it is called
+        // after collisions to the cloth have applied changes to the velocities
+        // but before the velocities have made changes to the ball positions.
         self.check_snap_to_cloth();
         self.apply_gravity();
+
+        // Let's keep this in the end because it is the only function that
+        // changes positions. No concrete reason, just so that the whole
+        // process is easier to reason about.
         self.apply_ball_velocities();
         // println!("");
         self.t += self.ts;
@@ -318,12 +320,56 @@ impl Simulator {
     }
 
     fn check_snap_to_cloth(&mut self) {
+        // There is a phenomenon that necessarily occurs due to the step-wise
+        // fashion in which we have to do the updates to the velocities.
+        // Consider this case:
+        //
+        // * The ball is moving towards the cloth with velocity u1.
+        // * The ball bounces against the cloth which causes its velocity to be
+        //      u2 = - u1 * r
+        //       or
+        //      u1 = - u2 / r
+        //   where r is the restitution.
+        // * Gravity is applied to the ball and its velocity becomes
+        //      u3 = u2 + g*ts
+        //
+        // There will unavoidably exist the possibility that 
+        //      u1 = u3
+        //       or
+        //      - u2 / r = u2 + g*ts
+        //       or
+        //      - u2 = r * u2 + r*g*ts
+        //       or
+        //      u2 = - g*ts * r/(r+1)
+        //
+        // Since g is negative u2 will be positive.
+        //
+        // This will cause the velocity to alternate between u1 and u2
+        // forever. As can be seen, this case can occur no matter what the
+        // values of r, g, ts. But it can only occur when the value of u2 is
+        // very small. r/(r+1) cannot be more than 1 so the phenomenon can only
+        // occur when u2 is equal or less to g*ts.
+        //
+        // We can take into account the value of r to find a tighter threshold
+        // but I think it is better to avoid such complications.
+        //
+        // Snapping the ball to the cloth when u2 is equal or less to this
+        // value will avoid the phenomenon.
+        // 
+        // It is important that this function is called after collisions have
+        // modified the velocities but before any changes to the positions have
+        // been made.
+        let snap_threshold = -self.world_conf.gravity * self.ts;
         for ball in self.balls.iter_mut() {
             if (
-                (ball.pos.z - self.world_conf.ball_radius).abs() < self.world_conf.snap_to_cloth_margin_pos
+                ball.pos.z <= self.world_conf.ball_radius // This means ball.u corresponds to 
+                                                          // the u2 mentioned in the analysis above.
                     &&
-                ball.u.z.abs() < self.world_conf.snap_to_cloth_margin_u
+                ball.u.z > 0.
+                    &&
+                ball.u.z <= snap_threshold
             ) {
+                println!("{:?}", ball.pos.z);
                 ball.pos.z = self.world_conf.ball_radius;
                 ball.u.z = 0.;
             }

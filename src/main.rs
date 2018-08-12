@@ -61,8 +61,6 @@ impl GameState {
                 JUnitVector3::new_normalize(JVector3::new(1., 0.5, 0.2)),
             ],
             ball_spot_radius_factor: consts::BALL_SPOT_RADIUS_FACTOR,
-            snap_to_cloth_margin_pos: consts::SNAP_TO_CLOTH_MARGIN_POS,
-            snap_to_cloth_margin_u: consts::SNAP_TO_CLOTH_MARGIN_U,
         };
 
         let balls = vec![
