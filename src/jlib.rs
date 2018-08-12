@@ -25,6 +25,9 @@ pub mod consts {
 
     pub const ANGLE_MODICUM: f64 = 2. * ::std::f64::consts::PI / 10000.;
 
+    pub const SNAP_TO_CLOTH_MARGIN_POS: f64 = 0.00001;
+    pub const SNAP_TO_CLOTH_MARGIN_U: f64 = 0.001;
+
     /* Here are some data taken from http://billiards.colostate.edu/threads/physics.html:
     
     ball diameter: 2.25 in
@@ -68,6 +71,8 @@ pub struct WorldConf {
     pub ball_spot_poss: Vec<JUnitVector3>,
     pub ball_spot_radius_factor: f64,
     pub gravity: f64,
+    pub snap_to_cloth_margin_pos: f64,
+    pub snap_to_cloth_margin_u: f64,
 }
 
 #[derive(Clone)]
@@ -84,14 +89,12 @@ pub struct Ball {
 
 impl Ball {
     fn apply_velocities(&mut self, ts: f64) {
+        // println!("apply_velocities: pos.z: {:?}, u.z: {:?}", self.pos.z, self.u.z);
         self.pos += self.u * ts;
-        // self.rot =  self.urot.powf(ts) * self.rot;
         let angle = self.urot_angle * ts;
         let urot = JUnitQuaternion::from_axis_angle(
             &self.urot_axis, angle);
         self.rot = urot * self.rot;
-
-        // println!("{:?}", self.rot);
     }
 }
 
@@ -227,7 +230,10 @@ impl Simulator {
     fn apply_gravity(&mut self) {
         for ball in self.balls.iter_mut() {
             if ball.pos.z > self.world_conf.ball_radius {
+                let before = ball.u.z;
                 ball.u.z += self.world_conf.gravity * self.ts;
+                // println!("apply_gravity: ball.u.z before: {:?} ball.u.z after: {:?}",
+                //          before, ball.u.z);
             }
         }
     }
@@ -257,10 +263,12 @@ impl Simulator {
     }
 
     pub fn progress(&mut self) -> SimulationState {
-        self.apply_gravity();
-        self.apply_ball_velocities();
         self.check_ball_to_ball_collisions();
         self.check_ball_to_cloth_collisions();
+        self.check_snap_to_cloth();
+        self.apply_gravity();
+        self.apply_ball_velocities();
+        // println!("");
         self.t += self.ts;
 
         SimulationState::from_simulator(self)
@@ -302,8 +310,24 @@ impl Simulator {
     fn adjust_for_ball_to_cloth_collisions(&mut self, coll_ev: &BallClothCollisionEvent) {
         let ball = &mut self.balls[coll_ev.i];
         let comp = ball.u.dot(&coll_ev.unit_normal) * coll_ev.unit_normal;
+        let before = ball.u.z;
         ball.u -= comp;
         ball.u -= comp * self.world_conf.ball_cloth_rest;
+        // println!("adjust_for_ball_to_cloth_collisions: ball.u.z before: {:?} ball.u.z after: {:?}",
+        //          before, ball.u.z);
+    }
+
+    fn check_snap_to_cloth(&mut self) {
+        for ball in self.balls.iter_mut() {
+            if (
+                (ball.pos.z - self.world_conf.ball_radius).abs() < self.world_conf.snap_to_cloth_margin_pos
+                    &&
+                ball.u.z.abs() < self.world_conf.snap_to_cloth_margin_u
+            ) {
+                ball.pos.z = self.world_conf.ball_radius;
+                ball.u.z = 0.;
+            }
+        }
     }
 
     fn check_ball_to_ball_collisions(&mut self) {
@@ -381,6 +405,7 @@ impl Simulator {
                                 unit_normal: JVector3::new(0., 0., 1.,),
                             }
                         );
+                        // println!("{:?}", ball.pos.z);
                     }
                 }
             }

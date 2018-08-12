@@ -46,7 +46,7 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
-            eye_height: 2.5,
+            eye_height: 6.5,
         };
 
         let world_conf = WorldConf {
@@ -58,16 +58,19 @@ impl GameState {
             ball_spot_poss: vec![
                 JUnitVector3::new_normalize(JVector3::new(0., 0., 1.)),
                 JUnitVector3::new_normalize(JVector3::new(0., 0., -1.)),
+                JUnitVector3::new_normalize(JVector3::new(1., 0.5, 0.2)),
             ],
             ball_spot_radius_factor: consts::BALL_SPOT_RADIUS_FACTOR,
+            snap_to_cloth_margin_pos: consts::SNAP_TO_CLOTH_MARGIN_POS,
+            snap_to_cloth_margin_u: consts::SNAP_TO_CLOTH_MARGIN_U,
         };
 
         let balls = vec![
             Ball {
                 pos: JVector3::new(-0.2, 0.0875, 5.),
-                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.5, 2.2)),
-                urot_angle: 8. * 3.14,
-                u: JVector3::new(0.125, 0., 0.) * 0.4,
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0., 0.)),
+                urot_angle: 0.,
+                u: JVector3::new(0., 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
             Ball {
@@ -81,7 +84,7 @@ impl GameState {
                 pos: JVector3::new(0.0, 0.0875, 25.),
                 urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.2, 0.)),
                 urot_angle: 12. * 3.14,
-                u: JVector3::new(-0.01625, 0.002, -8.) * 0.4,
+                u: JVector3::new(-0.1625, 0.002, -8.) * 0.4,
                 rot: JUnitQuaternion::identity(),
             },
         ];
@@ -128,7 +131,7 @@ impl event::EventHandler for GameState {
             }
 
             // for ball in self.simulator.balls.iter() {
-            //     println!("{:?} / {:?}", ball.pos.z, self.simulator.world_conf.ball_radius);
+            //     println!("pos.z: {:?}, pos.u.z {:?}", ball.pos.z, ball.u.z);
             // }
             // println!("");
 
