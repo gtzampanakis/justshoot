@@ -27,6 +27,7 @@ struct GraphicsConf {
     pixels_per_meter: f32,
     origin: JGVector3,
     eye_height: f64,
+    should_print_ball_positions: bool,
 }
 
 
@@ -46,7 +47,8 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
-            eye_height: 6.5,
+            eye_height: 0.5,
+            should_print_ball_positions: false,
         };
 
         let world_conf = WorldConf {
@@ -65,26 +67,26 @@ impl GameState {
 
         let balls = vec![
             Ball {
-                pos: JVector3::new(-0.2, 0.0875, 5.),
-                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0., 0.)),
-                urot_angle: 0.,
+                pos: JVector3::new(0.0, 0.0, 0.37),
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0., 0.5)),
+                urot_angle: 1.9 * 3.14,
                 u: JVector3::new(0., 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
-            Ball {
-                pos: JVector3::new(-0.1, 0.0875, 20.),
-                urot_axis: JUnitVector3::new_normalize(JVector3::new(13., 0.4, 0.1)),
-                urot_angle: 2. * 3.14,
-                u: JVector3::new(0.0, 0.000, 0.) * 0.4,
-                rot: JUnitQuaternion::identity(),
-            },
-            Ball {
-                pos: JVector3::new(0.0, 0.0875, 25.),
-                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.2, 0.)),
-                urot_angle: 12. * 3.14,
-                u: JVector3::new(-0.1625, 0.002, -8.) * 0.4,
-                rot: JUnitQuaternion::identity(),
-            },
+            // Ball {
+            //     pos: JVector3::new(-0.1, 0.0875, 20.),
+            //     urot_axis: JUnitVector3::new_normalize(JVector3::new(13., 0.4, 0.1)),
+            //     urot_angle: 2. * 3.14,
+            //     u: JVector3::new(0.0, 0.000, 0.) * 0.4,
+            //     rot: JUnitQuaternion::identity(),
+            // },
+            // Ball {
+            //     pos: JVector3::new(0.0, 0.0875, 25.),
+            //     urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0.2, 0.)),
+            //     urot_angle: 12. * 3.14,
+            //     u: JVector3::new(-0.1625, 0.002, -8.) * 0.4,
+            //     rot: JUnitQuaternion::identity(),
+            // },
         ];
         
         GameState {
@@ -128,10 +130,13 @@ impl event::EventHandler for GameState {
                 self.simulation_state_seq.states.push(simulation_state);
             }
 
-            // for ball in self.simulator.balls.iter() {
-            //     println!("pos.z: {:?}, pos.u.z {:?}", ball.pos.z, ball.u.z);
-            // }
-            // println!("");
+             
+            if self.graphics_conf.should_print_ball_positions {
+                for ball in self.simulator.balls.iter() {
+                    println!("pos: {:?}", ball.pos);
+                }
+                println!("");
+            }
 
 
             if !self.simulation_state_seq.states.is_empty() {
@@ -168,6 +173,25 @@ impl event::EventHandler for GameState {
                     (self.simulator.world_conf.ball_radius as f32) * scale,
                     0.001,
                 );
+
+                // // Show the rotation axis on the balls.
+                // graphics::set_color(ctx, graphics::Color::from_rgb(0, 255, 0));
+                // let line_graphic = graphics::line(
+                //     ctx,
+                //     &vec![
+                //         graphics::Point2::new(
+                //             self.graphics_conf.origin.x + (ball.pos.x as f32) * scale,
+                //             self.graphics_conf.origin.y + (ball.pos.y as f32) * scale,
+                //         ),
+                //         graphics::Point2::new(
+                //             self.graphics_conf.origin.x +
+                //                 ((ball.pos.x+ball.urot_axis.x*self.simulator.world_conf.ball_radius) as f32) * scale,
+                //             self.graphics_conf.origin.y +
+                //                 ((ball.pos.y+ball.urot_axis.y*self.simulator.world_conf.ball_radius) as f32) * scale,
+                //         ),
+                //     ],
+                //     2.,
+                // );
 
                 // Add some spots on the balls in order to see the rotation.
                 // The spot starts on the top of the ball.

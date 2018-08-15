@@ -70,6 +70,10 @@ pub struct WorldConf {
     pub gravity: f64,
 }
 
+pub struct DebugConf {
+    should_print_collisions: bool,
+}
+
 #[derive(Clone)]
 pub struct Ball {
     pub pos: JVector3,
@@ -199,6 +203,7 @@ struct BallClothCollisionEvent {
 pub struct Simulator {
     pub balls: Vec<Ball>,
     pub world_conf: WorldConf,
+    pub debug_conf: DebugConf,
 // timestep. Keep it here to retain the option of altering its value
 // dynamically.
     ts: f64,
@@ -216,6 +221,9 @@ impl Simulator {
         Simulator {
             balls: balls,
             world_conf: world_conf,
+            debug_conf: DebugConf {
+                should_print_collisions: true,
+            },
             ts: ts,
             t: 0.,
             t_hard_limit: 30.,
@@ -457,18 +465,17 @@ impl Simulator {
             }
 
             if let Some(coll_ev) = coll_ev_maybe {
+                if self.debug_conf.should_print_collisions {
+                    println!("Ball-to-cloth collision. Ball: {:?}", coll_ev.i);
+                }
                 self.adjust_for_ball_to_cloth_collisions(&coll_ev);
+                self.adjust_ball_for_spin(i, &coll_ev.unit_normal);
             }
         }
     }
-}
 
-struct Drawer {
-
-}
-
-impl Drawer {
-
+    fn adjust_ball_for_spin(&mut self, ball_i: usize, unit_normal: &JVector3) {
+    }
 }
 
 #[cfg(test)]
