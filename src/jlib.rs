@@ -8,6 +8,7 @@ use geometry::{
     calc_norm_apprch_v,
     calc_interpolated_vector,
     calc_interpolated_quaternion,
+    rotate_point,
 };
 
 pub mod consts {
@@ -222,7 +223,7 @@ impl Simulator {
             balls: balls,
             world_conf: world_conf,
             debug_conf: DebugConf {
-                should_print_collisions: true,
+                should_print_collisions: false,
             },
             ts: ts,
             t: 0.,
@@ -449,7 +450,7 @@ impl Simulator {
             {
                 let ball = &self.balls[i];
 
-                if ball.u.z < 0. {
+                if ball.u.z <= 0. {
                     // Ball is approaching the cloth.
                     if ball.pos.z <= self.world_conf.ball_radius {
                         // Ball is colliding with the cloth.
@@ -475,6 +476,20 @@ impl Simulator {
     }
 
     fn adjust_ball_for_spin(&mut self, ball_i: usize, unit_normal: &JVector3) {
+        let ball = &mut self.balls[ball_i];
+        let a_dot_n = ball.urot_axis.dot(unit_normal);
+        if a_dot_n > 0. {
+            let k = self.world_conf.ball_radius / a_dot_n;
+            let x = k * ball.urot_axis.unwrap();
+            let rotated_center = rotate_point(
+                &(ball.pos - x),
+                &JUnitQuaternion::from_axis_angle(
+                    &JUnitVector3::new_normalize(JVector3::new(unit_normal.x, unit_normal.y, unit_normal.z)),
+                    ball.urot_angle * a_dot_n * 0.0001
+                ),
+            ) + x;
+            ball.pos = rotated_center;
+        }
     }
 }
 

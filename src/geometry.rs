@@ -116,3 +116,12 @@ mod tests {
     }
 
 }
+
+pub fn rotate_point(v: &JVector3, q: &JUnitQuaternion) -> JVector3 {
+    // TODO: make this faster, through in-place maybe and through other ways
+    let qr = (
+        q.quaternion() * JQuaternion::new(0., v.x, v.y, v.z) * q.inverse().quaternion()
+    );
+    let vr = qr.as_vector();
+    JVector3::new(vr.x, vr.y, vr.z)
+}

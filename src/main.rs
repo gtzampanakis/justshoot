@@ -47,7 +47,7 @@ impl GameState {
             height: 480,
             pixels_per_meter: 800.,
             origin: JGVector3::new(640./2., 480./2., 0.),
-            eye_height: 0.5,
+            eye_height: 5.5,
             should_print_ball_positions: false,
         };
 
@@ -68,8 +68,8 @@ impl GameState {
         let balls = vec![
             Ball {
                 pos: JVector3::new(0.0, 0.0, 0.37),
-                urot_axis: JUnitVector3::new_normalize(JVector3::new(1., 0., 0.5)),
-                urot_angle: 1.9 * 3.14,
+                urot_axis: JUnitVector3::new_normalize(JVector3::new(-400., 0., 15.)),
+                urot_angle: -100.9 * 3.14,
                 u: JVector3::new(0., 0., 0.),
                 rot: JUnitQuaternion::identity(),
             },
